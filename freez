@@ -1,14 +1,7 @@
 local Players = game:GetService("Players")
-local UserInputService = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
 
 local player = Players.LocalPlayer
-
-local savedMovement = {
-	WalkSpeed = 16,
-	JumpPower = 50,
-	AutoRotate = true
-}
 
 local frozen = false
 
@@ -27,19 +20,18 @@ end
 local function freezeCharacter()
 	local character, humanoid, rootPart = getCharacter()
 	if not humanoid or not rootPart then return end
-	if frozen then return end
 
-	-- Save current movement settings
-	savedMovement.WalkSpeed = humanoid.WalkSpeed
-	savedMovement.JumpPower = humanoid.JumpPower
-	savedMovement.AutoRotate = humanoid.AutoRotate
+	if frozen then
+		return
+	end
 
-	-- Freeze movement
+	-- FREEZE CHARACTER
 	humanoid.WalkSpeed = 0
 	humanoid.JumpPower = 0
 	humanoid.AutoRotate = false
+	humanoid.PlatformStand = false
 
-	-- Stop current movement
+	-- Stop movement
 	rootPart.AssemblyLinearVelocity = Vector3.zero
 	rootPart.AssemblyAngularVelocity = Vector3.zero
 
@@ -50,18 +42,19 @@ local function unfreezeCharacter()
 	local character, humanoid, rootPart = getCharacter()
 	if not humanoid or not rootPart then return end
 
-	-- Restore normal movement
-	humanoid.WalkSpeed = savedMovement.WalkSpeed
-	humanoid.JumpPower = savedMovement.JumpPower
-	humanoid.AutoRotate = savedMovement.AutoRotate
+	-- RESTORE NORMAL MOVEMENT
+	humanoid.WalkSpeed = 16
+	humanoid.JumpPower = 50
+	humanoid.AutoRotate = true
+	humanoid.PlatformStand = false
 
-	-- Remove leftover velocity
+	-- Stop leftover velocity
 	rootPart.AssemblyLinearVelocity = Vector3.zero
 	rootPart.AssemblyAngularVelocity = Vector3.zero
 
 	frozen = false
 
-	-- Force Humanoid back to normal state
+	-- Force normal Humanoid state
 	task.defer(function()
 		if humanoid and humanoid.Parent then
 			humanoid:ChangeState(Enum.HumanoidStateType.Running)
@@ -69,28 +62,26 @@ local function unfreezeCharacter()
 	end)
 end
 
--- Detect Green Plate / FreeCam
+-- GREEN PLATE / FREECAM DETECTION
 RunService.Heartbeat:Connect(function()
+
 	if _G.freeCamMode == true then
+
 		freezeCharacter()
+
 	else
+
 		if frozen then
 			unfreezeCharacter()
 		end
+
 	end
+
 end)
 
--- Y = exit FreeCam and restore movement
-UserInputService.InputBegan:Connect(function(input, gameProcessed)
-	if gameProcessed then return end
-
-	if input.KeyCode == Enum.KeyCode.Y then
-		_G.freeCamMode = false
-		unfreezeCharacter()
-	end
-end)
-
--- Character respawn protection
+-- CHARACTER RESPAWN
 player.CharacterAdded:Connect(function()
+
 	frozen = false
+
 end)
